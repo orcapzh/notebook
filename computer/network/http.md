@@ -26,6 +26,8 @@
 - 虚拟Host
 - 长连接和管线化，在一个TCP连接上传输多个http请求和响应，避免频繁建立和关闭TCP连接
 
+[cache总结](https://imweb.io/topic/5795dcb6fb312541492eda8c)
+
 ## HTTP2
 
 ### 目标
