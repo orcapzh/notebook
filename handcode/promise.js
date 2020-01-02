@@ -41,16 +41,30 @@ const PEDDING = 0
 const FULFILLED = 1
 const REJECTED = 2
 
-function registe(promise, resolve,) {
+function registe(promise, newPromise, onFulfilled, onRejected) {
   promise.callbacks.push({
-    reso
+    onFulfilled,
+    onRejected,
+    promise: newPromise
   })
 }
 
-function invokePromiseCallbacks(promise, value) {
-  for(let i = 0, len = promise.callbacks.length; i < len; i++) {
+function publish(promise) {
+  const cbs = promise.callbacks
 
+
+}
+
+function invokeCallback(promise, callback, value) {
+  if (typeof callback === 'function') {
+    try {
+      value =
+    }
   }
+}
+
+function isObjectOrFunction(value) {
+  return typeof value === 'object' || typeof value === 'function'
 }
 
 function fulfill(promise, value) {
@@ -59,46 +73,49 @@ function fulfill(promise, value) {
   promise.value = value
   promise.state = FULFILLED
   // invoke functions
-  enqueue(() => {
-    promise.
-  })
+  enqueue(publish, promise)
 }
 
 function resolve(promise, value) {
   if (promise === value) {
     throw Error('resolved by promise self')
-  } else if (thenable(value)) {
+  } else if (isObjectOrFunction(value)) {
+    try {
+      const then = value.then
 
-    if (value.constructor instanceof promise.constructor) {
+      if (typeof then === 'function') {
+        enqueue(function () {
+          let done = false
 
-    }
-
-    enqueue(() => {
-      let done = false
-      try {
-        const then = value.then
-        then.call(value, newValue => {
-          if (done) return
-          done = true
-          resolve(promise, newValue)
-        }, reason => {
-          if (done) return
-          done = true
-          reject(promise, reason)
+          try {
+            then.call(value, newValue => {
+              if (done) return
+              done = true
+              if (newValue === value) {
+                fulfill(promise, value)
+              } else {
+                resolve(promise, newValue)
+              }
+            }, reason => {
+              if (done) return
+              done = true
+              reject(promise, reason)
+            })
+          } catch(e) {
+            if (!done) {
+              done = true
+              reject(promise, e)
+            }
+          }
         })
-      } catch(e) {
-        if (done) return
-        done = true
-        reject(promise, e)
       }
-    })
+
+    } catch(e) {
+      reject(promise, e)
+    }
   } else {
     fulfill(promise, value)
   }
-}
-
-function thenable(value) {
-  return value && typeof value.then === 'function'
 }
 
 function reject(promise, reason) {
@@ -128,6 +145,19 @@ function Promise(executor) {
   }
 }
 
+function noop() {}
+
+Promise.prototype.then = function (onFulfilled, onRejected) {
+  const promise = this
+
+  const newPromise = new this.constructor(noop)
+
+  if (promise.status === PEDDING) {
+    registe(promise, newPromise, onFulfilled, onRejected)
+  } else {
+    enqueue(() => {invokePromiseCallbacks})
+  }
+}
 
 
 /*
