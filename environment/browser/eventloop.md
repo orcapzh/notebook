@@ -75,3 +75,42 @@ promise 的处理函数也是进入到微任务队列。
 
 
 
+
+## 示例
+
+```js
+console.log('script 1')
+
+async function async1() {
+  await aysnc2()
+  console.log('async 1 end')
+}
+async function aysnc2() {
+  console.log('async 2 end')
+}
+Promise.resolve().then(() => {
+  console.log('promise resolve ')
+})
+async1().then(() => {
+  console.log('async next')
+})
+new Promise(rs => {
+  rs(Promise.resolve())
+}).then(() => {
+  console.log('new promise')
+})
+setTimeout(function () {
+  console.log('setTimeout')
+}, 0)
+
+new Promise(rs => {
+  console.log('Promise')
+  rs()
+}).then(function () {
+  console.log('promise 1')
+}).then(function () {
+  console.log('promise2')
+})
+console.log('script end')
+```
+

@@ -361,3 +361,258 @@ let scrollHeight = Math.max(
 
 
 [dom-navigation]: (https://zh.javascript.info/dom-navigation)
+
+-----
+
+## 待整理
+
+# DOM
+
+DOM是浏览器对HTML文档的表示模型，JS通过对DOM操作达到修改页面的目的。
+
+## Node
+
+DOM1定义了Node接口，所有节点类型都继承于Node类型。Node包含了节点的信息，nodeName和nodeValue根据Node的类型具有不同意义，当节点是Element时，nodeName代表元素标签名，nodeValue始终是null。
+
+- Node.ELEMENT_NODE(1);
+- Node.ATTRIBUTE_NODE(2);
+- Node.TEXT_NODE(3);
+- Node.CDATA_SECTION_NODE(4);
+- Node.ENTITY_REFERENCE_NODE(5);
+- Node.ENTITY_NODE(6);
+- Node.PROCESSING_INSTRUCTION_NODE(7);
+- Node.COMMENT_NODE(8);
+- Node.DOCUMENT_NODE(9);
+- Node.DOCUMENT_TYPE_NODE(10);
+- Node.DOCUMENT_FRAGMENT_NODE(11);
+- Node.NOTATION_NODE(12)。
+
+### 操作Node
+
+可以通过对某个节点进行操作来改变节点间的关系：
+
+- appendChild
+- insertBefore
+- replaceChild
+- removeChild
+
+### 节点间的关系
+
+![node relationship](../assets/NodeRelationship.jpg)
+
+### 克隆Node
+
+通过节点的`cloneNode`方法可以克隆节点，参数可以指定是否执行深拷贝，只有深拷贝才会将节点的子节点也拷贝。但这个方法只会拷贝节点的特性，而不会拷贝JavaScript属性，例如事件处理函数等。
+
+## NodeList
+
+NodeList是一个类数组对象，用于保存一组有序的节点。这个对象是基于DOM结构动态执行查询的结果，它会随着DOM结构的变化而变化。
+
+```js
+const array = Array.prototype.slice.call(nodes, 0);
+// 通过数组的方法将NodeList转化为一个数组，我们把它当数组使用了。
+```
+
+## Document Node
+
+Document元素表示整个网页,有一些属于网页的属性，比如`title`、`URL`和`referrer`等，最后一个表示网站是从哪个链接跳转过来的。`domain`属性表示当前网站的域名，出于安全限制，如果当前域名属于某个域名的子域名，则可以将域名设置为该域名。例如`p2p.wrox.com`可以设置为`wrox.com`，但不能设置为别的域。
+
+## Element Node
+
+Element 类型是使用 attributes 属性的唯一一个 DOM 节点类型。attributes 属性中包含一个
+NamedNodeMap，与 NodeList 类似，也是一个“动态”的集合。元素的每一个特性都由一个 Attr 节 点表示，每个节点都保存在 NamedNodeMap 对象中。
+
+## 动态集合
+
+在DOM的操作里，`NodeList`、`NamedNodeMap`和`HTMLCollection`是三个动态的集合，DOM结构的变化会实时地改变这些集合。从本质上来说，`NodeList`对象都是在访问 DOM 文档时实时运行的查询。
+
+比如以下代码会导致无限循环：
+
+```js
+const divs = document.getElementsByTagName("div");
+  for (let i = 0; i < divs.length; i++){
+      const div = document.createElement("div");
+      document.body.appendChild(div);
+}
+```
+
+### NodeList和HTMLCollection
+
+历史上的DOM集合接口。
+
+主要不同在于HTMLCollection是元素集合而NodeList是节点集合（即可以包含元素，也可以包含文本节点）。所以 node.childNodes 返回 NodeList，而 node.children 和 node.getElementsByXXX 返回 HTMLCollection 。
+
+唯一要注意的是 querySelectorAll 返回的虽然是 NodeList ，但是实际上是元素集合，并且是**静态**的（其他接口返回的HTMLCollection和NodeList都是live的）。
+
+事实上，将来浏览器将增加 queryAll 接口取代现在的 querySelectorAll，返回 Elements 是 Array 的子类（因而可以使用Array上的forEach、map等方法）。
+
+### Attribute和Property的区别
+
+当浏览器解析HTML并生成DOM对象时，对于元素节点来说，绝大多数标准特性（standard attributes）会在DOM对象上创建对应的属性。但是特性与DOM对象上的属性并不是一一对应的关系。
+
+#### DOM properties
+
+DOM对象上会有很多内建属性，但是在JS中，我们可以在DOM对象上挂载我们自定义的属性。
+
+```js
+document.body.myData = {
+  message: 'Hello',
+  say() {
+    console.log(this.message)
+  }
+}
+
+console.log(document.body.myData.message) // Hello
+document.body.myData.say() // Hello
+```
+
+总结：
+
+1. DOM properties可以拥有任何值
+2. 大小写敏感
+
+#### HTML attributes
+
+浏览器解析HTML并生成DOM对象时，会识别标准特性，并在DOM上创建对应的DOM属性。HTML特性只能是字符串类型。非标准的特性不会在DOM上存在对应的DOM属性，只能通过API访问。
+
+```html
+<body id="test" something="not-standard">
+  <script>
+    console.log(document.body.id) // test
+    console.log(document.body.something) // undefined
+  </script>
+</body>
+```
+
+有的元素拥有专属的标准特性，比如`<input>`元素有标准特性`type`，但`<body>`不含有这个标准特性。
+
+```html
+<body type="...">
+  <input id="input" type="text">
+  <script>
+    alert(input.type)
+    alert(body.type)
+  </script>
+</body>
+```
+
+总结：
+
+1. 特性名大小写不敏感
+2. 特性值只能是字符串
+
+```html
+<body>
+  <div id="elem" about="Ant"></div>
+
+  <script>
+    var elem = document.getElementById('elem')
+
+    console.log(elem.getAttribute('About')) // Ant
+    elem.setAttribute('Test', 123)
+    console.log(elem.outerHTML) // <div id="elem" about="Ant" test="123"></div>
+
+    for (let attr of elem.attributes) {
+      console.log( `${attr.name} = ${attr.value}`)
+    }
+  </script>
+</body>
+```
+
+注意：
+
+1. 设置Attribute时，值会被转成字符串
+2. 所有的特性都会在`outerHTML`中罗列
+3. `attributes`是可遍历的
+
+#### Property-attribute同步
+
+当一个`standard attribute`修改时，`property`会被自动更新，反过来也一样。
+
+但也有例外的情况，比如`input.value`只从 attribute -> property，反方向不会同步，且修改了property后会切断attribute到property的同步。这是为了在用户修改了输入框的值以后，不丢失HTML中的初始值，用于后续恢复初始值，而初始值就是HTML中的attribute。
+
+```js
+var input = document.createElement('input')
+input.id = 123
+console.log(input.getAttribute('id')) // 123
+input.setAttribute('id', 456)
+console.log(input.id) // 456
+
+input.setAttribute('value', 'value1')
+console.log(input.value) // value1
+
+input.setAttribute('value', 'value2')
+console.log(input.value) // value2
+
+input.value = 'value3'
+console.log(input.getAttribute('value')) // value2
+
+input.setAttribute('value', 'value4')
+console.log(input.value) // value3
+```
+
+DOM properties的类型不局限于字符串，比如
+
+- `input.checked`属性是一个布尔值
+- style attribute是一个字符串，但style property是一个对象
+- href attribute是相对路径或者`#hash`时，但href property也一直是绝对地址
+
+```html
+<div id="div" style="color:red;font-size:120%">Hello</div>
+<a id="a" href="#hello">link</a>
+
+<script>
+  // string
+  alert(div.getAttribute('style')); // color:red;font-size:120%
+
+  // object
+  alert(div.style); // [object CSSStyleDeclaration]
+  alert(div.style.color); // red
+
+  // attribute
+  alert(a.getAttribute('href')); // #hello
+
+  // property
+  alert(a.href ); // full URL in the form http://site.com/page#hello
+</script>
+```
+
+#### 非标准特性，dataset
+
+我们可以在HTML中自定义特性，为了避免与HTML未来加入的标准特性冲突，我们通过`data-*`来定义自定义特性。所有以`data-*`开头的都作会被存储在`dataset`属性中。
+
+```html
+<body data-mydata="banana" data-your-data="apple">
+  <script>
+    alert(document.body.dataset.mydata) // banana
+    alert(document.body.dataset.yourData) // banana
+  </script>
+</body>
+```
+
+#### 总结
+
+- Attributes – is what’s written in HTML.
+- Properties – is what’s in DOM objects.
+
+A small comparison:
+
+| | Properties | Attributes |
+| :-: | :-: | :-: |
+| Type | Any value, standard properties have types described in the spec | A string |
+| Name | Name is case-sensitive | Name is not case-sensitive |
+
+Methods to work with attributes are:
+
+- elem.hasAttribute(name) – to check for existence.
+- elem.getAttribute(name) – to get the value.
+- elem.setAttribute(name, value) – to set the value.
+- elem.removeAttribute(name) – to remove the attribute.
+- elem.attributes is a collection of all attributes.
+
+For most needs, DOM properties can serve us well. We should refer to attributes only when DOM properties do not suit us, when we need exactly attributes, for instance:
+
+- We need a non-standard attribute. But if it starts with data-, then we should use dataset.
+- We want to read the value “as written” in HTML. The value of the DOM property may be different, for instance the href property is always a full URL, and we may want to get the “original” value.
+
+[dom-attributes-and-properties]: https://javascript.info/dom-attributes-and-properties

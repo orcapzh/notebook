@@ -50,3 +50,19 @@ typeof b; // "undefined"
 ```
 
 ```
+
+## 类型转换
+
+### 显式转换
+
+用包装函数去显式转换一个值的类型，比如`String(123)`
+
+### 隐式转换
+
+抽象操作：
+
+1. ToString： 调用`toString()`获得值。
+
+2. ToNumber： 如果存在`valueOf`方法，则
+
+
